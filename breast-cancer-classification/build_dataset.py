@@ -4,8 +4,9 @@ from imutils import paths  # basic image processing functions like resizing
 import random, shutil, os # shutils offer function to perform operations
 
 originalPaths = list(paths,list_images(config.INPUT_DATASET))
-# randomly generate numbers 
+# randomly generate numbers i.e.,no =12345 , it will generate this sequence in 7 different ways  
 random.seed(7)
+# shuffle takes a list that randomly generated and will 
 random.shuffle(originalPaths)
 #splitting training data and converting to integer 
 index           = int(len(originalPaths)*config.TRAIN_SPLIT)
