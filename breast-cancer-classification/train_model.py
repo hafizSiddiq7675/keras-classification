@@ -1,6 +1,8 @@
+# matplotlib beckend is set to store figures in background
 import matplotlib
 matplotlib.use("Agg")
 
+#	necessary packages will import
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import LearningRateScheduler
 from keras.optimizers import Adagrad
@@ -10,24 +12,28 @@ from sklearn.metrics import confusion_matrix
 from cancernet.cancernet import CancerNet
 from cancernet import config
 from imutils import paths
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt	
 import numpy as np
 import os
 
+#	initial batch size and learning rate, define # of EPOCHS 
 NUM_EPOCHS	=	40; 
 INIT_LR		=	1e-2; 
 #list conversion to length
 BS			=	32
+# the total number of image paths in training/validation 
+# & testing directories will discover & conversion to length
 trainPaths	=	list(paths.list_images(config.TRAIN_PATH))
 lenTrain	=	len(trainPaths)
 lenVal		=	len(list(paths.list_images(config.VAL_PATH)))
 lenTest		=	len(list(paths.list_images(config.TEST_PATH)))
-
+# transform skewed distribution to normal in the labeled data
 trainLabels	=	[int(p.split(os.path.sep)[-2]) for p in trainPaths]
 trainLabels	=	np_utils.to_categorical(trainLabels)
 classTotals	=	trainLabels.sum(axis=0)
 classWeight	=	classTotals.max()/classTotals
-
+# initialize the training data augmentation object
+# translats, randomly shifts, and flips each training data sample
 trainAug 	= ImageDataGenerator(
 	rescale				=	1/255.0,
 	rotation_range		=	20,
@@ -39,8 +45,9 @@ trainAug 	= ImageDataGenerator(
 	vertical_flip		=	True,
 	fill_mode			=	"nearest")
 
+# initialize the validation/testing data augmentation object
 valAug		= ImageDataGenerator(rescale=1 / 255.0)
-
+# initialize the training generator
 trainGen 	= trainAug.flow_from_directory(
 	config.TRAIN_PATH,
 	class_mode		=	"categorical",
@@ -49,7 +56,7 @@ trainGen 	= trainAug.flow_from_directory(
 	shuffle			=	True,
 	batch_size		=	BS
 	)
-
+# initialize the validation generator
 valGen 				= valAug.flow_from_directory(
 	config.VAL_PATH,
 	class_mode		=	"categorical",
@@ -58,6 +65,7 @@ valGen 				= valAug.flow_from_directory(
 	shuffle			=	False,
 	batch_size		=	BS
 	)	
+# initialize the testing generator
 testGen 			= 	valAug.flow_from_directory(
 	config.TEST_PATH,
 	class_mode="categorical",
@@ -66,7 +74,7 @@ testGen 			= 	valAug.flow_from_directory(
 	shuffle=False,
 	batch_size=BS
 	)
-
+# our CancerNet model will initialize and compile 
 model	=	CancerNet.build(width=48,height=48,depth=3,classes=2)
 opt		=	Adagrad(lr=INIT_LR,decay=INIT_LR/NUM_EPOCHS)
 model.compile(
@@ -74,7 +82,7 @@ model.compile(
 	optimizer	=	opt,
 	metrics		=	["accuracy"])
 
-
+# generated model will fit
 M=model.fit_generator(
 	trainGen,
 	steps_per_epoch		=	lenTrain//BS,
@@ -83,25 +91,29 @@ M=model.fit_generator(
 	class_weight		=	classWeight,
 	epochs				=	NUM_EPOCHS
 	)
-
+# to make predictions the testing generator will reset & then our train model will use
 print("Now evaluating the model")
 testGen.reset()
 pred_indices	=	model.predict_generator(testGen,steps=(lenTest//BS)+1)
 
+# for each testing image the index of the label with 
+# largest predicted probability
 pred_indices	=	np.argmax(pred_indices,axis=1)
-
+# plot a nicely formatted classification report
 print(classification_report(testGen.classes, pred_indices, target_names=testGen.class_indices.keys()))
-
+# onfusion matrix will compute & use to derive 
+# the raw accuracy, sensitivity, and specificity
 cm=confusion_matrix(testGen.classes,pred_indices)
 total		=	sum(sum(cm))
 accuracy	=	(cm[0,0]+cm[1,1])/total
 specificity	=	cm[1,1]/(cm[1,0]+cm[1,1])
 sensitivity	=	cm[0,0]/(cm[0,0]+cm[0,1])
+# plot result of confusion matrix, accuracy, sensitivity, and specificity
 print(cm)
 print(f'Accuracy: {accuracy}')
 print(f'Specificity: {specificity}')
 print(f'Sensitivity: {sensitivity}')
-
+# plot the training loss and accuracy
 N = NUM_EPOCHS
 plt.style.use("ggplot")
 plt.figure()

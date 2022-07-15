@@ -4,16 +4,19 @@ from imutils import paths  #need to download this --- basic image processing fun
 import random, shutil, os # shutils offer function to perform operations
 #   at original input directory all images are shuffles
 originalPaths = list(paths,list_images(config.INPUT_DATASET))
-#   randomly generate numbers i.e.,no =12345 , it will generate this sequence in 7 different ways  
+#   randomly generate numbers 
+# i.e.,no =12345 , it will generate this sequence in 7 different ways  
 random.seed(7)
-#   shuffle takes a list that randomly generated and will re-organize them according to order
+#   shuffle takes a list that randomly generated 
+# & will re-organize them according to order
 random.shuffle(originalPaths)
 #  getting train_split data and converting it to integer 
 #  index splitting data into training & testing.  
 index           = int(len(originalPaths)*config.TRAIN_SPLIT)
 trainPaths      = originalPaths[:index]
 testPaths       = originalPaths[:index]
-#same functonality perform on validation_split to set aside some of the train_data to perform validation
+#same functonality perform on validation_split to 
+# set aside some of the train_data to perform validation
 index           = int(len(trainPaths)*config.VAL_SPLIT)
 valPaths        = trainPaths[:index]
 trainPaths      = trainPaths[index:]
@@ -42,8 +45,8 @@ for (setType, originalPaths,  basePath) in datasets:
             if not os.path.exists(labelPath):
                 print(f'Building directory {labelPath}')
                 os.makedirs(labelPath)
-                # construct the path to the destination image and then copy
-                # the file/image itself
+                # construct the path to the destination image 
+                # and then copy the file/image itself
                 newPath=os.path.sep.join([labelPath, file])
                 shutil.copy2(path, newPath)
 
